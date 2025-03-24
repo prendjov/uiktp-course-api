@@ -1,0 +1,52 @@
+version: '3.4'
+
+volumes:
+  courseeducation_mariadb_data_volume: 
+  courseeducation_media_data:
+  courseeducation_documents_data:
+
+services:
+  mariadb:
+    image: mariadb:10.8.3
+    container_name: courseeducation_mariadb
+    restart: always
+    ports:
+      - 3308:3308
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_PASSWORD=test
+      - MARIADB_USER=test
+      - MARIADB_DATABASE=courseeducation
+    volumes:
+      - courseeducation_mariadb_data_volume:/var/lib/mysql
+    command: ["mysqld", "--port=3308"]
+
+  api:
+    image: courseeducation/api
+    container_name: courseeducation_api
+    hostname: api
+    restart: always
+    build:
+      context: .
+      dockerfile: src/Api/Dockerfile
+    ports:
+      - "8090:80"
+    depends_on:
+        - mariadb
+    volumes:
+      - courseeducation_media_data:/app/media
+      - courseeducation_documents_data:/app/documents
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+
+  # emailservice:
+  #   image: courseeducation/emailservice
+  #   container_name: courseeducation_emailservice
+  #   restart: always
+  #   build:
+  #     context: .
+  #     dockerfile: src/EmailService/Dockerfile
+  #   depends_on:
+  #       - rabbitmq
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
